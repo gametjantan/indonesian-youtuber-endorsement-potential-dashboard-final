@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
@@ -15,7 +14,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS for modern styling
+# Custom CSS for styling
 st.markdown("""
 <style>
     .main-header {
@@ -29,34 +28,12 @@ st.markdown("""
         -webkit-text-fill-color: transparent;
         background-clip: text;
     }
-
     .sub-header {
         font-size: 1.2rem;
         color: #666;
         text-align: center;
         margin-bottom: 2rem;
     }
-
-    .metric-card {
-        background: white;
-        padding: 1rem;
-        border-radius: 10px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        border-left: 4px solid #667eea;
-    }
-
-    .stSelectbox > div > div {
-        background-color: #f8f9fa;
-    }
-
-    .criteria-info {
-        background: #f8f9fa;
-        padding: 1rem;
-        border-radius: 8px;
-        margin: 1rem 0;
-        border-left: 4px solid #28a745;
-    }
-
     .landing-container {
         text-align: center;
         padding: 5rem 1rem;
@@ -66,20 +43,17 @@ st.markdown("""
         margin: 2rem 0;
         box-shadow: 0 10px 30px rgba(0,0,0,0.2);
     }
-
     .landing-title {
         font-size: 3.5rem;
         font-weight: 800;
         margin-bottom: 1rem;
         text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
     }
-
     .landing-subtitle {
         font-size: 1.5rem;
         margin-bottom: 2rem;
         opacity: 0.9;
     }
-
     .landing-description {
         font-size: 1.1rem;
         margin-bottom: 3rem;
@@ -88,7 +62,6 @@ st.markdown("""
         margin-right: auto;
         line-height: 1.6;
     }
-
     .feature-card {
         background: white;
         color: #333;
@@ -98,33 +71,11 @@ st.markdown("""
         margin: 1rem;
         text-align: center;
     }
-
     .feature-icon {
         font-size: 3rem;
         margin-bottom: 1rem;
     }
-
-    .back-button {
-        position: fixed;
-        top: 20px;
-        left: 20px;
-        background: #667eea;
-        color: white;
-        border: none;
-        padding: 0.5rem 1rem;
-        border-radius: 20px;
-        cursor: pointer;
-        font-size: 0.9rem;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-        z-index: 1000;
-    }
-
-    .back-button:hover {
-        background: #5a6fd8;
-        transform: translateY(-2px);
-    }
-
-    </style>
+</style>
 """, unsafe_allow_html=True)
 
 @st.cache_data
@@ -433,9 +384,8 @@ def dashboard_page():
                       - Views: {format_number(top_video_views[i])}
                       - Link: [Watch Here]({top_video_links[i]})
                     """)
-            except (ValueError, SyntaxError) as e:
-                st.warning(f"Could not parse top video data for {selected_channel}: {e}")
-                st.info("Ensure 'top_video_titles', 'top_video_views', and 'top_video_links' columns are correctly formatted as string representations of lists.")
+            except (ValueError, SyntaxError):
+                st.warning(f"Data video tidak dapat diparsing dengan benar untuk channel {selected_channel}.")
     st.subheader("📋 Data Lengkap")
     display_columns = st.multiselect(
         "Pilih kolom yang ingin ditampilkan:",
@@ -450,4 +400,34 @@ def dashboard_page():
                           'avg_comment_count', 'avg_watch_time', 'avg_engagement_rate', 'subscriber_count', 'top_video_views']
         for col in numeric_columns:
             if col in display_data.columns:
-                if col == 'saw_score'
+                if col == 'saw_score' or col == 'avg_engagement_rate':
+                    display_data[col] = display_data[col].round(4)
+                elif col == 'top_video_views':
+                    display_data[col] = display_data[col].apply(lambda x: [f"{v:,.0f}" for v in ast.literal_eval(x)] if isinstance(x, str) else x)
+                else:
+                    display_data[col] = display_data[col].apply(lambda x: f"{x:,.0f}")
+        st.dataframe(display_data, use_container_width=True, hide_index=True, height=400)
+        csv = df_filtered.to_csv(index=False)
+        st.download_button(
+            label="📥 Download Data (CSV)",
+            data=csv,
+            file_name=f"youtube_endorsement_analysis_{len(selected_genres)}_genres.csv",
+            mime="text/csv"
+        )
+    st.markdown("---")
+    st.markdown("""
+    <div style='text-align: center; color: #666; padding: 1rem;'>
+        <p><strong>Sistem Rekomendasi Potensi Endorsement YouTuber</strong></p>
+        <p>Menggunakan Metode SAW (Simple Additive Weighting) untuk analisis multi-kriteria</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+def main():
+    if 'page' not in st.session_state:
+        st.session_state.page = "landing"
+    if st.session_state.page == "landing":
+        landing_page()
+    elif st.session_state.page == "dashboard":
+        dashboard_page()
+
+if
