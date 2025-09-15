@@ -1,11 +1,13 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-import numpy as np
+import os
+import ast
 
-# Configure page
+# Page configuration (gabungan)
 st.set_page_config(
     page_title="Indonesian YouTuber Endorsement Dashboard",
     page_icon="📺",
@@ -13,9 +15,10 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS
+# Custom CSS (gabungan dan disesuaikan)
 st.markdown("""
 <style>
+    /* Landing page styles */
     .main-header {
         font-size: 3rem;
         font-weight: bold;
@@ -71,10 +74,29 @@ st.markdown("""
     .cta-button:hover {
         transform: translateY(-2px);
     }
+
+    /* Dashboard styles */
+    .main-header-dashboard {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #1f1f1f;
+        text-align: center;
+        margin-bottom: 0.5rem;
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    .sub-header-dashboard {
+        font-size: 1.2rem;
+        color: #666;
+        text-align: center;
+        margin-bottom: 1.5rem;
+    }
 </style>
 """, unsafe_allow_html=True)
 
-# Load data
+# Load data function
 @st.cache_data
 def load_data():
     try:
@@ -84,6 +106,7 @@ def load_data():
         st.error("File saw_results.csv tidak ditemukan!")
         return pd.DataFrame()
 
+# Landing page function
 def landing_page():
     """Landing page dengan informasi tentang aplikasi"""
     
@@ -159,39 +182,39 @@ def landing_page():
         col1, col2, col3, col4 = st.columns(4)
         
         with col1:
-            st.markdown("""
+            st.markdown(f"""
                 <div class="metric-card">
-                    <h3 style="color: #FF0000;">{}</h3>
+                    <h3 style="color: #FF0000;">{len(df)}</h3>
                     <p>Total YouTuber</p>
                 </div>
-            """.format(len(df)), unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
         
         with col2:
             avg_views = df['avg_view_count'].mean()
-            st.markdown("""
+            st.markdown(f"""
                 <div class="metric-card">
-                    <h3 style="color: #FF0000;">{:,.0f}</h3>
+                    <h3 style="color: #FF0000;">{avg_views:,.0f}</h3>
                     <p>Rata-rata Views</p>
                 </div>
-            """.format(avg_views), unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
         
         with col3:
             total_subs = df['subscriber_count'].sum()
-            st.markdown("""
+            st.markdown(f"""
                 <div class="metric-card">
-                    <h3 style="color: #FF0000;">{:,.0f}</h3>
+                    <h3 style="color: #FF0000;">{total_subs:,.0f}</h3>
                     <p>Total Subscribers</p>
                 </div>
-            """.format(total_subs), unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
         
         with col4:
             avg_engagement = df['avg_engagement_rate'].mean()
-            st.markdown("""
+            st.markdown(f"""
                 <div class="metric-card">
-                    <h3 style="color: #FF0000;">{:.2f}%</h3>
+                    <h3 style="color: #FF0000;">{avg_engagement:.2f}%</h3>
                     <p>Rata-rata Engagement</p>
                 </div>
-            """.format(avg_engagement), unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
     
     st.markdown("---")
     
@@ -200,7 +223,7 @@ def landing_page():
     with col2:
         if st.button("🚀 Masuk ke Dashboard", use_container_width=True, type="primary"):
             st.session_state.page = "dashboard"
-            st.rerun()
+            st.experimental_rerun()
     
     # Footer
     st.markdown("""
@@ -210,6 +233,7 @@ def landing_page():
         </div>
     """, unsafe_allow_html=True)
 
+# Dashboard page function
 def dashboard_page():
     """Dashboard utama dengan semua analisis"""
     
@@ -217,298 +241,86 @@ def dashboard_page():
     st.sidebar.markdown("## 📺 Navigation")
     if st.sidebar.button("⬅️ Kembali ke Landing Page", use_container_width=True):
         st.session_state.page = "landing"
-        st.rerun()
+        st.experimental_rerun()
     
     st.sidebar.markdown("---")
     
     # Load data
     df = load_data()
-    
     if df.empty:
-        st.error("Tidak ada data untuk ditampilkan!")
+        st.warning("Data tidak tersedia untuk ditampilkan di dashboard.")
         return
     
-    # Dashboard header
+    # Header
     st.markdown("""
-        <div style="text-align: center; margin-bottom: 2rem;">
-            <h1 style="color: #FF0000;">📊 Dashboard Analisis YouTuber</h1>
-            <p style="font-size: 1.2rem; color: #666;">Ranking Potensi Endorsement berdasarkan Metode SAW</p>
+        <div class="main-header-dashboard">
+            Sistem Rekomendasi Potensi Endorsement YouTuber
+        </div>
+        <div class="sub-header-dashboard">
+            Analisis dan visualisasi performa YouTuber Indonesia menggunakan metode SAW
         </div>
     """, unsafe_allow_html=True)
     
-    # Key metrics cards
-    col1, col2, col3, col4 = st.columns(4)
+    # Contoh visualisasi: Ranking YouTuber berdasarkan score SAW
+    st.markdown("### 🏆 Ranking YouTuber Berdasarkan Skor SAW")
+    df_sorted = df.sort_values(by='saw_score', ascending=False)
+    st.dataframe(df_sorted[['youtuber_name', 'saw_score']].reset_index(drop=True))
     
-    with col1:
-        st.metric(
-            label="Total YouTuber",
-            value=len(df),
-            delta="Teranalisis"
-        )
+    # Visualisasi bar chart top 10 YouTuber
+    top10 = df_sorted.head(10)
+    fig_bar = px.bar(top10, x='youtuber_name', y='saw_score',
+                     labels={'youtuber_name': 'YouTuber', 'saw_score': 'Skor SAW'},
+                     title='Top 10 YouTuber Berdasarkan Skor SAW',
+                     color='saw_score', color_continuous_scale='Viridis')
+    st.plotly_chart(fig_bar, use_container_width=True)
     
-    with col2:
-        avg_score = df['saw_score'].mean()
-        st.metric(
-            label="Rata-rata SAW Score",
-            value=f"{avg_score:.3f}",
-            delta=f"{(avg_score/df['saw_score'].max()*100):.1f}% dari maksimal"
-        )
+    # Radar chart perbandingan kriteria untuk YouTuber terpilih
+    st.markdown("### 📊 Perbandingan Kriteria YouTuber")
+    youtuber_list = df['youtuber_name'].tolist()
+    selected_youtubers = st.multiselect("Pilih YouTuber untuk dibandingkan (maks 3)", youtuber_list, default=youtuber_list[:3], max_selections=3)
     
-    with col3:
-        top_engagement = df.nlargest(1, 'avg_engagement_rate')['avg_engagement_rate'].iloc[0]
-        st.metric(
-            label="Engagement Rate Tertinggi",
-            value=f"{top_engagement:.2f}%",
-            delta="Terbaik"
-        )
-    
-    with col4:
-        total_avg_views = df['avg_view_count'].sum()
-        st.metric(
-            label="Total Average Views",
-            value=f"{total_avg_views:,.0f}",
-            delta="Akumulatif"
-        )
-    
-    st.markdown("---")
-    
-    # Main content area
-    tab1, tab2, tab3, tab4 = st.tabs(["🏆 Ranking SAW", "📊 Analisis Perbandingan", "📈 Top Videos", "📋 Data Detail"])
-    
-    with tab1:
-        st.subheader("🏆 Ranking Potensi Endorsement (SAW Method)")
+    if selected_youtubers:
+        categories = ['avg_view_count', 'avg_like_count', 'avg_comment_count', 'avg_engagement_rate', 'subscriber_count']
+        categories_labels = ['Views', 'Likes', 'Comments', 'Engagement Rate', 'Subscribers']
         
-        # Top 10 YouTuber
-        top_10 = df.nlargest(10, 'saw_score')
+        fig = go.Figure()
         
-        # Bar chart for top 10
-        fig_ranking = px.bar(
-            top_10, 
-            x='saw_score', 
-            y='channel_title',
-            orientation='h',
-            title="Top 10 YouTuber dengan Score SAW Tertinggi",
-            labels={'saw_score': 'SAW Score', 'channel_title': 'Channel'},
-            color='saw_score',
-            color_continuous_scale='Reds'
-        )
-        fig_ranking.update_layout(
-            yaxis={'categoryorder': 'total ascending'},
-            height=500,
-            showlegend=False
-        )
-        st.plotly_chart(fig_ranking, use_container_width=True)
+        for yt in selected_youtubers:
+            row = df[df['youtuber_name'] == yt].iloc[0]
+            values = [row[c] for c in categories]
+            # Normalisasi nilai agar skala sama (misal min-max scaling)
+            min_vals = df[categories].min()
+            max_vals = df[categories].max()
+            norm_values = [(row[c] - min_vals[c]) / (max_vals[c] - min_vals[c]) if max_vals[c] != min_vals[c] else 0 for c in categories]
+            fig.add_trace(go.Scatterpolar(
+                r=norm_values,
+                theta=categories_labels,
+                fill='toself',
+                name=yt
+            ))
         
-        # Detailed ranking table
-        st.subheader("📋 Tabel Ranking Lengkap")
-        ranking_df = df.copy()
-        ranking_df['rank'] = range(1, len(ranking_df) + 1)
-        ranking_df = ranking_df[['rank', 'channel_title', 'saw_score', 'avg_view_count', 
-                               'avg_like_count', 'avg_comment_count', 'avg_watch_time', 'avg_engagement_rate', 'subscriber_count']]
-        
-        # Format numbers for better readability
-        ranking_df['avg_view_count'] = ranking_df['avg_view_count'].apply(lambda x: f"{x:,.0f}")
-        ranking_df['avg_like_count'] = ranking_df['avg_like_count'].apply(lambda x: f"{x:,.0f}")
-        ranking_df['avg_comment_count'] = ranking_df['avg_comment_count'].apply(lambda x: f"{x:,.0f}")
-        ranking_df['avg_watch_time'] = ranking_df['avg_watch_time'].apply(lambda x: f"{x:,.0f}")
-        ranking_df['avg_engagement_rate'] = ranking_df['avg_engagement_rate'].apply(lambda x: f"{x:.2f}%")
-        ranking_df['subscriber_count'] = ranking_df['subscriber_count'].apply(lambda x: f"{x:,.0f}")
-        ranking_df['saw_score'] = ranking_df['saw_score'].apply(lambda x: f"{x:.4f}")
-        
-        st.dataframe(ranking_df, use_container_width=True, hide_index=True)
-    
-    with tab2:
-        st.subheader("📊 Analisis Perbandingan YouTuber")
-        
-        # YouTuber selector for comparison
-        selected_youtubers = st.multiselect(
-            "Pilih YouTuber untuk dibandingkan (maksimal 5):",
-            options=df['channel_title'].tolist(),
-            default=df.nlargest(5, 'saw_score')['channel_title'].tolist()[:5],
-            max_selections=5
-        )
-        
-        if selected_youtubers:
-            comparison_df = df[df['channel_title'].isin(selected_youtubers)]
-            
-            # Radar Chart
-            fig_radar = go.Figure()
-            
-            # Normalize data for radar chart (0-1 scale)
-            metrics = ['avg_view_count', 'avg_like_count', 'avg_comment_count', 'avg_watch_time', 'avg_engagement_rate', 'subscriber_count']
-            metric_labels = ['Avg Views', 'Avg Likes', 'Avg Comments', 'Avg Watch Time', 'Engagement Rate', 'Subscribers']
-            
-            for idx, channel in enumerate(selected_youtubers):
-                channel_data = comparison_df[comparison_df['channel_title'] == channel].iloc[0]
-                
-                # Normalize each metric (min-max normalization)
-                normalized_values = []
-                for metric in metrics:
-                    min_val = df[metric].min()
-                    max_val = df[metric].max()
-                    normalized = (channel_data[metric] - min_val) / (max_val - min_val) if max_val != min_val else 0
-                    normalized_values.append(normalized)
-                
-                fig_radar.add_trace(go.Scatterpolar(
-                    r=normalized_values + [normalized_values[0]],  # Close the radar
-                    theta=metric_labels + [metric_labels[0]],
-                    fill='toself',
-                    name=channel,
-                    line_color=px.colors.qualitative.Set1[idx % len(px.colors.qualitative.Set1)]
-                ))
-            
-            fig_radar.update_layout(
-                polar=dict(
-                    radialaxis=dict(visible=True, range=[0, 1])
-                ),
-                showlegend=True,
-                title="Perbandingan Performa YouTuber (Normalized)",
-                height=600
-            )
-            
-            st.plotly_chart(fig_radar, use_container_width=True)
-            
-            # Comparison metrics
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                # Views comparison
-                fig_views = px.bar(
-                    comparison_df,
-                    x='channel_title',
-                    y='avg_view_count',
-                    title="Perbandingan Average Views",
-                    color='avg_view_count',
-                    color_continuous_scale='Blues'
+        fig.update_layout(
+            polar=dict(
+                radialaxis=dict(
+                    visible=True,
+                    range=[0, 1]
                 )
-                fig_views.update_xaxis(tickangle=45)
-                st.plotly_chart(fig_views, use_container_width=True)
-            
-            with col2:
-                # Engagement rate comparison
-                fig_engagement = px.bar(
-                    comparison_df,
-                    x='channel_title',
-                    y='avg_engagement_rate',
-                    title="Perbandingan Engagement Rate",
-                    color='avg_engagement_rate',
-                    color_continuous_scale='Greens'
-                )
-                fig_engagement.update_xaxis(tickangle=45)
-                st.plotly_chart(fig_engagement, use_container_width=True)
-    
-    with tab3:
-        st.subheader("📈 Top Performance Analysis")
-        
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            # Top channels by views
-            top_views = df.nlargest(10, 'avg_view_count')
-            fig_top_views = px.bar(
-                top_views,
-                x='avg_view_count',
-                y='channel_title',
-                orientation='h',
-                title="Top 10 - Highest Average Views",
-                color='avg_view_count',
-                color_continuous_scale='Reds'
-            )
-            fig_top_views.update_layout(yaxis={'categoryorder': 'total ascending'})
-            st.plotly_chart(fig_top_views, use_container_width=True)
-        
-        with col2:
-            # Top channels by subscribers
-            top_subs = df.nlargest(10, 'subscriber_count')
-            fig_top_subs = px.bar(
-                top_subs,
-                x='subscriber_count',
-                y='channel_title',
-                orientation='h',
-                title="Top 10 - Highest Subscriber Count",
-                color='subscriber_count',
-                color_continuous_scale='Blues'
-            )
-            fig_top_subs.update_layout(yaxis={'categoryorder': 'total ascending'})
-            st.plotly_chart(fig_top_subs, use_container_width=True)
-        
-        # Scatter plot analysis
-        st.subheader("🔍 Analisis Korelasi")
-        
-        fig_scatter = px.scatter(
-            df,
-            x='avg_view_count',
-            y='avg_engagement_rate',
-            size='subscriber_count',
-            color='saw_score',
-            hover_name='channel_title',
-            title="Hubungan antara Views, Engagement Rate, dan Subscribers",
-            labels={
-                'avg_view_count': 'Average Views',
-                'avg_engagement_rate': 'Engagement Rate (%)',
-                'subscriber_count': 'Subscribers',
-                'saw_score': 'SAW Score'
-            },
-            color_continuous_scale='Viridis'
+            ),
+            showlegend=True,
+            title="Radar Chart Perbandingan Kriteria"
         )
-        fig_scatter.update_traces(marker=dict(line=dict(width=0.5, color='DarkSlateGrey')))
-        st.plotly_chart(fig_scatter, use_container_width=True)
-    
-    with tab4:
-        st.subheader("📋 Data Lengkap")
-        
-        # Search and filter options
-        col1, col2, col3 = st.columns(3)
-        
-        with col1:
-            search_term = st.text_input("🔍 Cari Channel:", placeholder="Masukkan nama channel...")
-        
-        with col2:
-            min_score = st.number_input("SAW Score Minimum:", min_value=0.0, max_value=1.0, value=0.0, step=0.001)
-        
-        with col3:
-            min_subs = st.number_input("Minimum Subscribers:", min_value=0, value=0, step=1000)
-        
-        # Apply filters
-        filtered_df = df.copy()
-        
-        if search_term:
-            filtered_df = filtered_df[filtered_df['channel_title'].str.contains(search_term, case=False, na=False)]
-        
-        if min_score > 0:
-            filtered_df = filtered_df[filtered_df['saw_score'] >= min_score]
-        
-        if min_subs > 0:
-            filtered_df = filtered_df[filtered_df['subscriber_count'] >= min_subs]
-        
-        st.write(f"Menampilkan {len(filtered_df)} dari {len(df)} channels")
-        
-        # Display filtered data
-        display_df = filtered_df.copy()
-        display_df = display_df.round(4)
-        st.dataframe(display_df, use_container_width=True, hide_index=True)
-        
-        # Download button
-        csv = display_df.to_csv(index=False)
-        st.download_button(
-            label="📥 Download Data as CSV",
-            data=csv,
-            file_name="youtuber_saw_analysis.csv",
-            mime="text/csv"
-        )
-
-def main():
-    """Main application function"""
-    
-    # Initialize session state
-    if 'page' not in st.session_state:
-        st.session_state.page = "landing"
-    
-    # Page routing
-    if st.session_state.page == "landing":
-        landing_page()
+        st.plotly_chart(fig, use_container_width=True)
     else:
-        dashboard_page()
+        st.info("Silakan pilih minimal satu YouTuber untuk dibandingkan.")
+    
+    # Contoh analisis tambahan bisa ditambahkan di sini
 
-if __name__ == "__main__":
-    main()
+# Initialize session state page
+if 'page' not in st.session_state:
+    st.session_state.page = "landing"
+
+# Main app logic
+if st.session_state.page == "landing":
+    landing_page()
+elif st.session_state.page == "dashboard":
+    dashboard_page()
