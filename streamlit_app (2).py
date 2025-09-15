@@ -42,6 +42,11 @@ st.markdown("""
         border-radius: 20px;
         margin: 2rem 0;
         box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+
+        display: flex;              
+        flex-direction: column;     
+        align-items: center;        
+        justify-content: center;   
     }
     .landing-title {
         font-size: 3.5rem;
