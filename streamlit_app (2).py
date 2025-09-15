@@ -5,78 +5,20 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import os
-import ast
+import ast # Import the ast module
 
-# Page configuration (gabungan)
+# Page configuration
 st.set_page_config(
-    page_title="Indonesian YouTuber Endorsement Dashboard",
-    page_icon="📺",
+    page_title="Sistem Rekomendasi Potensi Endorsement YouTuber",
+    page_icon="🎯",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS (gabungan dan disesuaikan)
+# Custom CSS for modern styling
 st.markdown("""
 <style>
-    /* Landing page styles */
     .main-header {
-        font-size: 3rem;
-        font-weight: bold;
-        text-align: center;
-        color: #FF0000;
-        margin-bottom: 1rem;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-    }
-    .sub-header {
-        font-size: 1.5rem;
-        text-align: center;
-        color: #666;
-        margin-bottom: 2rem;
-    }
-    .feature-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        padding: 1.5rem;
-        border-radius: 10px;
-        color: white;
-        margin-bottom: 1rem;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    }
-    .feature-title {
-        font-size: 1.2rem;
-        font-weight: bold;
-        margin-bottom: 0.5rem;
-    }
-    .saw-explanation {
-        background: #f8f9fa;
-        padding: 2rem;
-        border-radius: 10px;
-        border-left: 5px solid #FF0000;
-        margin: 2rem 0;
-    }
-    .metric-card {
-        background: white;
-        padding: 1rem;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        text-align: center;
-    }
-    .cta-button {
-        background: linear-gradient(135deg, #FF0000 0%, #CC0000 100%);
-        color: white;
-        padding: 1rem 2rem;
-        border: none;
-        border-radius: 25px;
-        font-size: 1.1rem;
-        font-weight: bold;
-        cursor: pointer;
-        transition: transform 0.2s;
-    }
-    .cta-button:hover {
-        transform: translateY(-2px);
-    }
-
-    /* Dashboard styles */
-    .main-header-dashboard {
         font-size: 2.5rem;
         font-weight: 700;
         color: #1f1f1f;
@@ -87,240 +29,578 @@ st.markdown("""
         -webkit-text-fill-color: transparent;
         background-clip: text;
     }
-    .sub-header-dashboard {
+
+    .sub-header {
         font-size: 1.2rem;
         color: #666;
         text-align: center;
-        margin-bottom: 1.5rem;
+        margin-bottom: 2rem;
     }
-</style>
+
+    .metric-card {
+        background: white;
+        padding: 1rem;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        border-left: 4px solid #667eea;
+    }
+
+    .stSelectbox > div > div {
+        background-color: #f8f9fa;
+    }
+
+    .criteria-info {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+        margin: 1rem 0;
+        border-left: 4px solid #28a745;
+    }
+
+    .landing-container {
+        text-align: center;
+        padding: 5rem 1rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 20px;
+        margin: 2rem 0;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+
+    .landing-title {
+        font-size: 3.5rem;
+        font-weight: 800;
+        margin-bottom: 1rem;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .landing-subtitle {
+        font-size: 1.5rem;
+        margin-bottom: 2rem;
+        opacity: 0.9;
+    }
+
+    .landing-description {
+        font-size: 1.1rem;
+        margin-bottom: 3rem;
+        max-width: 800px;
+        margin-left: auto;
+        margin-right: auto;
+        line-height: 1.6;
+    }
+
+    .feature-card {
+        background: white;
+        color: #333;
+        padding: 2rem;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        margin: 1rem;
+        text-align: center;
+    }
+
+    .feature-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+
+    .back-button {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        background: #667eea;
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        z-index: 1000;
+    }
+
+    .back-button:hover {
+        background: #5a6fd8;
+        transform: translateY(-2px);
+    }
+
+    </style>
 """, unsafe_allow_html=True)
 
-# Load data function
 @st.cache_data
 def load_data():
+    """Load SAW results data with error handling"""
     try:
-        df = pd.read_csv('saw_results.csv')
-        return df
-    except FileNotFoundError:
-        st.error("File saw_results.csv tidak ditemukan!")
-        return pd.DataFrame()
+        if os.path.exists('saw_results.csv'):
+            df = pd.read_csv('saw_results.csv')
+            return df
+        else:
+            st.error("❌ File 'saw_results.csv' tidak ditemukan!")
+            st.info("💡 Silakan jalankan Google Colab notebook terlebih dahulu untuk generate data.")
+            return None
+    except Exception as e:
+        st.error(f"❌ Error loading data: {str(e)}")
+        return None
 
-# Landing page function
+def format_number(num):
+    """Format large numbers for better readability"""
+    if num >= 1_000_000:
+        return f"{num/1_000_000:.1f}M"
+    elif num >= 1_000:
+        return f"{num/1_000:.1f}K"
+    else:
+        return f"{num:,.0f}"
+
+def create_ranking_chart(df_filtered, top_n=15):
+    """Create interactive ranking bar chart"""
+    top_channels = df_filtered.head(top_n)
+    
+    fig = px.bar(
+        top_channels,
+        x='rank',
+        y='saw_score',
+        color='genre',
+        hover_data=['channel_title', 'avg_view_count', 'subscriber_count'],
+        title=f"Top {top_n} Channel - Ranking Potensi Endorsement",
+        labels={'saw_score': 'SAW Score', 'rank': 'Ranking'}
+    )
+
+    fig.update_layout(
+        height=500,
+        showlegend=True,
+        title_font_size=16,
+        title_x=0.5,
+        xaxis_title="Ranking",
+        yaxis_title="SAW Score"
+    )
+    
+    return fig
+
+def create_genre_analysis_chart(df):
+    """Create genre analysis charts"""
+    genre_stats = df.groupby('genre').agg({
+        'saw_score': ['mean', 'count', 'std'],
+        'avg_view_count': 'mean',
+        'subscriber_count': 'mean'
+    }).round(4)
+    
+    genre_stats.columns = ['avg_score', 'count', 'std_score', 'avg_views', 'avg_subscribers']
+    genre_stats = genre_stats.reset_index().sort_values('avg_score', ascending=False)
+
+    # Create subplot
+    fig = make_subplots(
+        rows=1, cols=2,
+        subplot_titles=('Rata-rata Skor SAW per Genre', 'Jumlah Channel per Genre'),
+        specs=[[{"secondary_y": False}, {"secondary_y": False}]]
+    )
+
+    # Average score bar chart
+    fig.add_trace(
+        go.Bar(
+            x=genre_stats['genre'],
+            y=genre_stats['avg_score'],
+            name='Avg SAW Score',
+            marker_color='lightblue',
+            text=genre_stats['avg_score'].round(3),
+            textposition='outside'
+        ),
+        row=1, col=1
+    )
+
+    # Channel count bar chart
+    fig.add_trace(
+        go.Bar(
+            x=genre_stats['genre'],
+            y=genre_stats['count'],
+            name='Channel Count',
+            marker_color='lightcoral',
+            text=genre_stats['count'],
+            textposition='outside'
+        ),
+        row=1, col=2
+    )
+
+    fig.update_layout(
+        height=400,
+        showlegend=False,
+        title_text="Analisis per Genre",
+        title_x=0.5
+    )
+    
+    return fig, genre_stats
+
+def create_criteria_radar_chart(df, channel_title):
+    """Create radar chart for specific channel criteria"""
+    channel_data = df[df['channel_title'] == channel_title].iloc[0]
+    
+    # Normalize criteria values (0-1 scale)
+    criteria = ['avg_view_count', 'avg_like_count', 'avg_comment_count', 
+                'avg_watch_time','avg_engagement_rate', 'subscriber_count']
+
+    normalized_values = []
+    for criterion in criteria:
+        max_val = df[criterion].max()
+        normalized_val = channel_data[criterion] / max_val if max_val > 0 else 0
+        normalized_values.append(normalized_val)
+    
+    criteria_labels = [
+        'Avg Views',
+        'Avg Likes', 
+        'Avg Comments',
+        'Avg Watch Time',
+        'Engagement Rate',
+        'Subscribers'
+    ]
+
+    fig = go.Figure()
+    
+    fig.add_trace(go.Scatterpolar(
+        r=normalized_values,
+        theta=criteria_labels,
+        fill='toself',
+        name=channel_title,
+        line_color='rgb(102, 126, 234)'
+    ))
+
+    fig.update_layout(
+        polar=dict(
+            radialaxis=dict(
+                visible=True,
+                range=[0, 1]
+            )),
+        showlegend=True,
+        title=f"Profil Kriteria: {channel_title}",
+        title_x=0.5,
+        height=400
+    )
+    
+    return fig
+
 def landing_page():
-    """Landing page dengan informasi tentang aplikasi"""
+    """Landing page with welcome message and features"""
     
-    # Hero Section
     st.markdown("""
-        <div class="main-header">
-            📺 Indonesian YouTuber<br>Endorsement Dashboard
-        </div>
-        <div class="sub-header">
-            Sistem Penilaian Potensi Endorsement YouTuber Indonesia<br>
-            Menggunakan Metode Simple Additive Weighting (SAW)
-        </div>
+    <div class="landing-container">
+        <h1 class="landing-title">🎯 YouTube Endorsement Analyzer</h1>
+        <p class="landing-subtitle">Sistem Rekomendasi Potensi Endorsement YouTuber</p>
+        <p class="landing-description">
+            Platform analisis canggih yang menggunakan metode SAW (Simple Additive Weighting) 
+            untuk mengevaluasi potensi endorsement channel YouTube berdasarkan multiple kriteria 
+            seperti engagement rate, view count, subscriber count, dan metrik lainnya.
+        </p>
+    </div>
     """, unsafe_allow_html=True)
     
-    st.markdown("---")
-    
-    # SAW Method Explanation
-    st.markdown("""
-        <div class="saw-explanation">
-            <h3>🎯 Tentang Metode SAW (Simple Additive Weighting)</h3>
-            <p>
-                Sistem ini menggunakan metode SAW untuk menilai potensi endorsement YouTuber Indonesia 
-                berdasarkan berbagai kriteria penting:
-            </p>
-            <ul>
-                <li><strong>Average Views:</strong> Rata-rata jumlah views per video</li>
-                <li><strong>Average Likes:</strong> Rata-rata jumlah likes per video</li>
-                <li><strong>Average Comments:</strong> Rata-rata jumlah komentar per video</li>
-                <li><strong>Engagement Rate:</strong> Tingkat interaksi dengan audience</li>
-                <li><strong>Subscriber Count:</strong> Jumlah total subscriber</li>
-            </ul>
-            <p>
-                Setiap kriteria memiliki bobot yang telah ditentukan untuk menghasilkan 
-                ranking yang objektif dan akurat.
-            </p>
-        </div>
-    """, unsafe_allow_html=True)
-    
-    # Features Section
-    st.markdown("### ✨ Fitur Utama Dashboard")
+    # Features section
+    st.markdown("### ✨ Fitur Utama")
     
     col1, col2, col3 = st.columns(3)
     
     with col1:
         st.markdown("""
-            <div class="feature-card">
-                <div class="feature-title">📊 Analisis Komprehensif</div>
-                <div>Visualisasi data lengkap dengan berbagai jenis chart dan grafik interaktif</div>
-            </div>
+        <div class="feature-card">
+            <div class="feature-icon">📊</div>
+            <h3>Analisis Multi-Kriteria</h3>
+            <p>Evaluasi comprehensive menggunakan 6 kriteria utama dengan bobot yang telah dioptimalkan menggunakan metode ROC.</p>
+        </div>
         """, unsafe_allow_html=True)
     
     with col2:
         st.markdown("""
-            <div class="feature-card">
-                <div class="feature-title">🏆 Ranking SAW</div>
-                <div>Sistem pemeringkatan berdasarkan metode Simple Additive Weighting</div>
-            </div>
+        <div class="feature-card">
+            <div class="feature-icon">🏆</div>
+            <h3>Ranking Otomatis</h3>
+            <p>Sistem ranking otomatis berdasarkan SAW score untuk mengidentifikasi channel dengan potensi endorsement tertinggi.</p>
+        </div>
         """, unsafe_allow_html=True)
     
     with col3:
         st.markdown("""
-            <div class="feature-card">
-                <div class="feature-title">📈 Perbandingan YouTuber</div>
-                <div>Radar chart untuk membandingkan performa antar YouTuber</div>
-            </div>
+        <div class="feature-card">
+            <div class="feature-icon">📈</div>
+            <h3>Visualisasi Interaktif</h3>
+            <p>Dashboard interaktif dengan berbagai chart dan grafik untuk analisis yang lebih mendalam dan insight yang actionable.</p>
+        </div>
         """, unsafe_allow_html=True)
-    
-    # Statistics Preview
-    df = load_data()
-    if not df.empty:
-        st.markdown("### 📈 Statistik Data")
-        
-        col1, col2, col3, col4 = st.columns(4)
-        
-        with col1:
-            st.markdown(f"""
-                <div class="metric-card">
-                    <h3 style="color: #FF0000;">{len(df)}</h3>
-                    <p>Total YouTuber</p>
-                </div>
-            """, unsafe_allow_html=True)
-        
-        with col2:
-            avg_views = df['avg_view_count'].mean()
-            st.markdown(f"""
-                <div class="metric-card">
-                    <h3 style="color: #FF0000;">{avg_views:,.0f}</h3>
-                    <p>Rata-rata Views</p>
-                </div>
-            """, unsafe_allow_html=True)
-        
-        with col3:
-            total_subs = df['subscriber_count'].sum()
-            st.markdown(f"""
-                <div class="metric-card">
-                    <h3 style="color: #FF0000;">{total_subs:,.0f}</h3>
-                    <p>Total Subscribers</p>
-                </div>
-            """, unsafe_allow_html=True)
-        
-        with col4:
-            avg_engagement = df['avg_engagement_rate'].mean()
-            st.markdown(f"""
-                <div class="metric-card">
-                    <h3 style="color: #FF0000;">{avg_engagement:.2f}%</h3>
-                    <p>Rata-rata Engagement</p>
-                </div>
-            """, unsafe_allow_html=True)
     
     st.markdown("---")
     
-    # Call to Action
-    col1, col2, col3 = st.columns([1, 1, 1])
-    with col2:
-        if st.button("🚀 Masuk ke Dashboard", use_container_width=True, type="primary"):
-            st.session_state.page = "dashboard"
-            st.experimental_rerun()
+    # Additional info
+    col1, col2 = st.columns(2)
     
-    # Footer
+    with col1:
+        st.markdown("### 🎯 Kriteria Analisis")
+        st.markdown("""
+        - **Engagement Rate (40.83%)** - Tingkat interaksi audience
+        - **Average Watch Time (24.17%)** - Durasi rata-rata menonton
+        - **Average Views (15.83%)** - Jumlah views rata-rata
+        - **Subscribers (10.28%)** - Jumlah subscriber
+        - **Average Likes (6.11%)** - Rata-rata likes per video
+        - **Average Comments (2.78%)** - Rata-rata komentar per video
+        """)
+    
+    with col2:
+        st.markdown("### 📋 Yang Bisa Anda Lakukan")
+        st.markdown("""
+        - 🔍 **Filter berdasarkan genre** untuk analisis spesifik
+        - 📊 **Lihat ranking channel** berdasarkan potensi endorsement
+        - 📈 **Analisis performa per genre** dan statistik detail
+        - 🎬 **Eksplorasi top videos** dari setiap channel
+        - 📥 **Download hasil analisis** dalam format CSV
+        - 🕸️ **Analisis radar chart** untuk profil channel detail
+        """)
+    
+    st.markdown("---")
+    
+    # Start button
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        if st.button("🚀 Mulai Analisis Sekarang", use_container_width=True, type="primary"):
+            st.session_state.page = "dashboard"
+            st.rerun()
+    
+    st.markdown("---")
     st.markdown("""
-        <div style="text-align: center; margin-top: 3rem; padding: 2rem; color: #666;">
-            <p>Dashboard ini menggunakan data YouTube API untuk menganalisis potensi endorsement</p>
-            <p>© 2024 Indonesian YouTuber Endorsement Analysis Dashboard</p>
-        </div>
+    <div style='text-align: center; color: #666; padding: 1rem;'>
+        <p><em>Dikembangkan dengan metode SAW untuk memberikan rekomendasi endorsement yang akurat dan objektif</em></p>
+    </div>
     """, unsafe_allow_html=True)
 
-# Dashboard page function
 def dashboard_page():
-    """Dashboard utama dengan semua analisis"""
+    """Main dashboard page"""
     
-    # Sidebar navigation
-    st.sidebar.markdown("## 📺 Navigation")
-    if st.sidebar.button("⬅️ Kembali ke Landing Page", use_container_width=True):
+    # Back to landing button
+    if st.button("← Kembali ke Landing Page", key="back_button"):
         st.session_state.page = "landing"
-        st.experimental_rerun()
+        st.rerun()
     
-    st.sidebar.markdown("---")
+    # Header
+    st.markdown('<h1 class="main-header">Sistem Rekomendasi Potensi Endorsement YouTuber</h1>', unsafe_allow_html=True)
+    st.markdown('<p class="sub-header">Analisis Metrik dan Engagement Menggunakan Metode SAW (Simple Additive Weighting)</p>', unsafe_allow_html=True)
     
     # Load data
     df = load_data()
-    if df.empty:
-        st.warning("Data tidak tersedia untuk ditampilkan di dashboard.")
+    
+    if df is None:
+        st.stop()
+    
+    # Sidebar
+    st.sidebar.header("🔧 Filter & Pengaturan")
+    
+    # Genre filter
+    available_genres = ['Semua Genre'] + sorted(df['genre'].unique().tolist())
+    selected_genres = st.sidebar.multiselect(
+        "Pilih Genre:",
+        options=df['genre'].unique(),
+        default=df['genre'].unique(),
+        help="Pilih satu atau lebih genre untuk dianalisis"
+    )
+
+    # Top N filter
+    top_n = st.sidebar.slider(
+        "Jumlah Top Channel:",
+        min_value=5,
+        max_value=50,
+        value=15,
+        step=5,
+        help="Pilih jumlah channel teratas yang ingin ditampilkan"
+    )
+
+    # SAW Criteria Information
+    st.sidebar.markdown("### 📊 Kriteria SAW")
+    st.sidebar.markdown("""
+    **Bobot ROC Prioritas Kriteria:**
+    - 📈 Engagement Rate: 40,83%
+    - 👀 Avg Watch Time: 24,17%
+    - 🎥 Avg Views: 15,83%
+    - 👥 Subscribers: 10,28%
+    - ❤️ Avg Likes: 6,11%
+    - 💬 Avg Comments: 2,78%
+    """)
+
+    # Filter data
+    if selected_genres:
+        df_filtered = df[df['genre'].isin(selected_genres)].copy()
+    else:
+        df_filtered = df.copy()
+    
+    # Main content
+    if len(df_filtered) == 0:
+        st.warning("⚠️ Tidak ada data yang sesuai dengan filter yang dipilih.")
         return
     
-    # Header
-    st.markdown("""
-        <div class="main-header-dashboard">
-            Sistem Rekomendasi Potensi Endorsement YouTuber
-        </div>
-        <div class="sub-header-dashboard">
-            Analisis dan visualisasi performa YouTuber Indonesia menggunakan metode SAW
-        </div>
-    """, unsafe_allow_html=True)
-    
-    # Contoh visualisasi: Ranking YouTuber berdasarkan score SAW
-    st.markdown("### 🏆 Ranking YouTuber Berdasarkan Skor SAW")
-    df_sorted = df.sort_values(by='saw_score', ascending=False)
-    st.dataframe(df_sorted[['youtuber_name', 'saw_score']].reset_index(drop=True))
-    
-    # Visualisasi bar chart top 10 YouTuber
-    top10 = df_sorted.head(10)
-    fig_bar = px.bar(top10, x='youtuber_name', y='saw_score',
-                     labels={'youtuber_name': 'YouTuber', 'saw_score': 'Skor SAW'},
-                     title='Top 10 YouTuber Berdasarkan Skor SAW',
-                     color='saw_score', color_continuous_scale='Viridis')
-    st.plotly_chart(fig_bar, use_container_width=True)
-    
-    # Radar chart perbandingan kriteria untuk YouTuber terpilih
-    st.markdown("### 📊 Perbandingan Kriteria YouTuber")
-    youtuber_list = df['youtuber_name'].tolist()
-    selected_youtubers = st.multiselect("Pilih YouTuber untuk dibandingkan (maks 3)", youtuber_list, default=youtuber_list[:3], max_selections=3)
-    
-    if selected_youtubers:
-        categories = ['avg_view_count', 'avg_like_count', 'avg_comment_count', 'avg_engagement_rate', 'subscriber_count']
-        categories_labels = ['Views', 'Likes', 'Comments', 'Engagement Rate', 'Subscribers']
-        
-        fig = go.Figure()
-        
-        for yt in selected_youtubers:
-            row = df[df['youtuber_name'] == yt].iloc[0]
-            values = [row[c] for c in categories]
-            # Normalisasi nilai agar skala sama (misal min-max scaling)
-            min_vals = df[categories].min()
-            max_vals = df[categories].max()
-            norm_values = [(row[c] - min_vals[c]) / (max_vals[c] - min_vals[c]) if max_vals[c] != min_vals[c] else 0 for c in categories]
-            fig.add_trace(go.Scatterpolar(
-                r=norm_values,
-                theta=categories_labels,
-                fill='toself',
-                name=yt
-            ))
-        
-        fig.update_layout(
-            polar=dict(
-                radialaxis=dict(
-                    visible=True,
-                    range=[0, 1]
-                )
-            ),
-            showlegend=True,
-            title="Radar Chart Perbandingan Kriteria"
+    # Key metrics
+    col1, col2, col3, col4 = st.columns(4)
+
+    with col1:
+        st.metric(
+            label="📊 Total Channel",
+            value=len(df_filtered),
+            delta=f"{len(selected_genres)} genre"
         )
-        st.plotly_chart(fig, use_container_width=True)
-    else:
-        st.info("Silakan pilih minimal satu YouTuber untuk dibandingkan.")
     
-    # Contoh analisis tambahan bisa ditambahkan di sini
+    with col2:
+        best_channel = df_filtered.iloc[0]
+        st.metric(
+            label="🏆 Channel Terbaik",
+            value=best_channel['channel_title'],
+            delta=f"Score: {best_channel['saw_score']:.4f}"
+        )
+    
+    with col3:
+        avg_score = df_filtered['saw_score'].mean()
+        st.metric(
+            label="📈 Rata-rata Skor",
+            value=f"{avg_score:.4f}",
+            delta=f"Range: {df_filtered['saw_score'].min():.3f}-{df_filtered['saw_score'].max():.3f}"
+        )
 
-# Initialize session state page
-if 'page' not in st.session_state:
-    st.session_state.page = "landing"
+    with col4:
+        total_avg_views = df_filtered['avg_view_count'].sum()
+        st.metric(
+            label="👀 Total Avg Views",
+            value=format_number(total_avg_views),
+            delta=f"Avg: {format_number(df_filtered['avg_view_count'].mean())}"
+        )
 
-# Main app logic
-if st.session_state.page == "landing":
-    landing_page()
-elif st.session_state.page == "dashboard":
-    dashboard_page()
+    st.markdown("---")
+    
+    # Main charts
+    col1, col2 = st.columns([2, 1])
+    
+    with col1:
+        # Ranking chart
+        ranking_fig = create_ranking_chart(df_filtered, top_n)
+        st.plotly_chart(ranking_fig, use_container_width=True)
+
+    with col2:
+        # Top channels table
+        st.subheader(f"🏆 Top {min(10, len(df_filtered))} Channel")
+        top_channels = df_filtered.head(10)[['rank', 'channel_title', 'genre', 'saw_score']]
+        
+        # Format the dataframe for display
+        display_df = top_channels.copy()
+        display_df['saw_score'] = display_df['saw_score'].round(4)
+        display_df.columns = ['Rank', 'Channel', 'Genre', 'Score']
+    
+        st.dataframe(
+            display_df,
+            use_container_width=True,
+            hide_index=True,
+            height=350
+        )
+    
+    # Genre analysis
+    st.subheader("📊 Analisis per Genre")
+    genre_fig, genre_stats = create_genre_analysis_chart(df_filtered)
+    st.plotly_chart(genre_fig, use_container_width=True)
+    
+    # Detailed analysis
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.subheader("📈 Statistik Genre")
+        st.dataframe(
+            genre_stats[['genre', 'avg_score', 'count', 'std_score']].round(4),
+            use_container_width=True,
+            hide_index=True
+        )
+    
+    with col2:
+        st.subheader("🔍 Channel Detail Analysis")
+        selected_channel = st.selectbox(
+            "Pilih Channel untuk Analisis Detail:",
+            options=df_filtered['channel_title'].tolist(),
+            help="Pilih channel untuk melihat profil kriteria detail"
+        )
+
+        if selected_channel:
+            radar_fig = create_criteria_radar_chart(df_filtered, selected_channel)
+            st.plotly_chart(radar_fig, use_container_width=True)
+
+            # Display Top Videos
+            st.markdown("#### 🎬 Top Videos")
+            channel_data = df_filtered[df_filtered['channel_title'] == selected_channel].iloc[0]
+            
+            try:
+                top_video_titles = ast.literal_eval(channel_data['top_video_titles'])
+                top_video_views = ast.literal_eval(channel_data['top_video_views'])
+                top_video_links = ast.literal_eval(channel_data['top_video_links'])
+
+                for i in range(len(top_video_titles)):
+                    st.markdown(f"""
+                    - **{top_video_titles[i]}**
+                      - Views: {format_number(top_video_views[i])}
+                      - Link: [Watch Here]({top_video_links[i]})
+                    """)
+            except (ValueError, SyntaxError) as e:
+                st.warning(f"Could not parse top video data for {selected_channel}: {e}")
+                st.info("Ensure 'top_video_titles', 'top_video_views', and 'top_video_links' columns are correctly formatted as string representations of lists.")
+
+    # Detailed data table
+    st.subheader("📋 Data Lengkap")
+    
+    # Column selection for display
+    display_columns = st.multiselect(
+        "Pilih kolom yang ingin ditampilkan:",
+        options=['rank', 'channel_title', 'genre', 'saw_score', 'avg_view_count', 
+                'avg_like_count', 'avg_comment_count', 'avg_watch_time', 'avg_engagement_rate', 'subscriber_count',
+                'top_video_titles', 'top_video_views', 'top_video_links'], # Added new columns
+        default=['rank', 'channel_title', 'genre', 'saw_score', 'avg_view_count', 'subscriber_count']
+    )
+
+    if display_columns:
+        # Format numbers for better display
+        display_data = df_filtered[display_columns].copy()
+
+        # Format numeric columns
+        numeric_columns = ['saw_score', 'avg_view_count', 'avg_like_count', 
+                          'avg_comment_count', 'avg_watch_time', 'avg_engagement_rate', 'subscriber_count', 'top_video_views'] # Added top_video_views
+        
+        for col in numeric_columns:
+            if col in display_data.columns:
+                if col == 'saw_score' or col == 'avg_engagement_rate':
+                    display_data[col] = display_data[col].round(4)
+                elif col == 'top_video_views': # Special handling for top_video_views which is a list
+                    display_data[col] = display_data[col].apply(lambda x: [f"{v:,.0f}" for v in ast.literal_eval(x)] if isinstance(x, str) else x)
+                else:
+                    display_data[col] = display_data[col].apply(lambda x: f"{x:,.0f}")
+        
+        st.dataframe(
+            display_data,
+            use_container_width=True,
+            hide_index=True,
+            height=400
+        )
+        
+        # Download button
+        csv = df_filtered.to_csv(index=False)
+        st.download_button(
+            label="📥 Download Data (CSV)",
+            data=csv,
+            file_name=f"youtube_endorsement_analysis_{len(selected_genres)}_genres.csv",
+            mime="text/csv"
+        )
+
+    # Footer
+    st.markdown("---")
+    st.markdown("""
+    <div style='text-align: center; color: #666; padding: 1rem;'>
+        <p><strong>Sistem Rekomendasi Potensi Endorsement YouTuber</strong></p>
+        <p>Menggunakan Metode SAW (Simple Additive Weighting) untuk analisis multi-kriteria</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+def main():
+    # Initialize session state for page navigation
+    if 'page' not in st.session_state:
+        st.session_state.page = "landing"
+    
+    # Page routing
+    if st.session_state.page == "landing":
+        landing_page()
+    elif st.session_state.page == "dashboard":
+        dashboard_page()
+
+if __name__ == "__main__":
+    main()
