@@ -56,7 +56,7 @@ st.markdown("""
     }
     .landing-description {
         font-size: 1.1rem;
-        margin-bottom: 3rem;
+        margin: 0 auto 3rem; /* auto kiri-kanan, bawah 3rem */
         text-align: center;
         max-width: 800px;
         line-height: 1.6;
