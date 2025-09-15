@@ -98,12 +98,6 @@ def landing_page():
         </div>
     """, unsafe_allow_html=True)
     
-    # Add hero image or video thumbnail placeholder
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        st.image("https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/c637900d-fb6b-48fd-8346-d7b1cbd18722.png", 
-                caption="Dashboard Analytics YouTube Indonesia")
-    
     st.markdown("---")
     
     # SAW Method Explanation
@@ -173,7 +167,7 @@ def landing_page():
             """.format(len(df)), unsafe_allow_html=True)
         
         with col2:
-            avg_views = df['Average_Views'].mean()
+            avg_views = df['avg_view_count'].mean()
             st.markdown("""
                 <div class="metric-card">
                     <h3 style="color: #FF0000;">{:,.0f}</h3>
@@ -182,7 +176,7 @@ def landing_page():
             """.format(avg_views), unsafe_allow_html=True)
         
         with col3:
-            total_subs = df['Subscriber_Count'].sum()
+            total_subs = df['subscriber_count'].sum()
             st.markdown("""
                 <div class="metric-card">
                     <h3 style="color: #FF0000;">{:,.0f}</h3>
@@ -191,7 +185,7 @@ def landing_page():
             """.format(total_subs), unsafe_allow_html=True)
         
         with col4:
-            avg_engagement = df['Engagement_Rate'].mean()
+            avg_engagement = df['avg_engagement_rate'].mean()
             st.markdown("""
                 <div class="metric-card">
                     <h3 style="color: #FF0000;">{:.2f}%</h3>
@@ -253,15 +247,15 @@ def dashboard_page():
         )
     
     with col2:
-        avg_score = df['SAW_Score'].mean()
+        avg_score = df['saw_score'].mean()
         st.metric(
             label="Rata-rata SAW Score",
             value=f"{avg_score:.3f}",
-            delta=f"{(avg_score/df['SAW_Score'].max()*100):.1f}% dari maksimal"
+            delta=f"{(avg_score/df['saw_score'].max()*100):.1f}% dari maksimal"
         )
     
     with col3:
-        top_engagement = df.nlargest(1, 'Engagement_Rate')['Engagement_Rate'].iloc[0]
+        top_engagement = df.nlargest(1, 'avg_engagement_rate')['avg_engagement_rate'].iloc[0]
         st.metric(
             label="Engagement Rate Tertinggi",
             value=f"{top_engagement:.2f}%",
@@ -269,7 +263,7 @@ def dashboard_page():
         )
     
     with col4:
-        total_avg_views = df['Average_Views'].sum()
+        total_avg_views = df['avg_view_count'].sum()
         st.metric(
             label="Total Average Views",
             value=f"{total_avg_views:,.0f}",
@@ -285,17 +279,17 @@ def dashboard_page():
         st.subheader("🏆 Ranking Potensi Endorsement (SAW Method)")
         
         # Top 10 YouTuber
-        top_10 = df.nlargest(10, 'SAW_Score')
+        top_10 = df.nlargest(10, 'saw_score')
         
         # Bar chart for top 10
         fig_ranking = px.bar(
             top_10, 
-            x='SAW_Score', 
-            y='Channel_Name',
+            x='saw_score', 
+            y='channel_title',
             orientation='h',
             title="Top 10 YouTuber dengan Score SAW Tertinggi",
-            labels={'SAW_Score': 'SAW Score', 'Channel_Name': 'Channel'},
-            color='SAW_Score',
+            labels={'saw_score': 'SAW Score', 'channel_title': 'Channel'},
+            color='saw_score',
             color_continuous_scale='Reds'
         )
         fig_ranking.update_layout(
@@ -308,17 +302,18 @@ def dashboard_page():
         # Detailed ranking table
         st.subheader("📋 Tabel Ranking Lengkap")
         ranking_df = df.copy()
-        ranking_df['Rank'] = range(1, len(ranking_df) + 1)
-        ranking_df = ranking_df[['Rank', 'Channel_Name', 'SAW_Score', 'Average_Views', 
-                               'Average_Likes', 'Average_Comments', 'Engagement_Rate', 'Subscriber_Count']]
+        ranking_df['rank'] = range(1, len(ranking_df) + 1)
+        ranking_df = ranking_df[['rank', 'channel_title', 'saw_score', 'avg_view_count', 
+                               'avg_like_count', 'avg_comment_count', 'avg_watch_time', 'avg_engagement_rate', 'subscriber_count']]
         
         # Format numbers for better readability
-        ranking_df['Average_Views'] = ranking_df['Average_Views'].apply(lambda x: f"{x:,.0f}")
-        ranking_df['Average_Likes'] = ranking_df['Average_Likes'].apply(lambda x: f"{x:,.0f}")
-        ranking_df['Average_Comments'] = ranking_df['Average_Comments'].apply(lambda x: f"{x:,.0f}")
-        ranking_df['Engagement_Rate'] = ranking_df['Engagement_Rate'].apply(lambda x: f"{x:.2f}%")
-        ranking_df['Subscriber_Count'] = ranking_df['Subscriber_Count'].apply(lambda x: f"{x:,.0f}")
-        ranking_df['SAW_Score'] = ranking_df['SAW_Score'].apply(lambda x: f"{x:.4f}")
+        ranking_df['avg_view_count'] = ranking_df['avg_view_count'].apply(lambda x: f"{x:,.0f}")
+        ranking_df['avg_like_count'] = ranking_df['avg_like_count'].apply(lambda x: f"{x:,.0f}")
+        ranking_df['avg_comment_count'] = ranking_df['avg_comment_count'].apply(lambda x: f"{x:,.0f}")
+        ranking_df['avg_watch_time'] = ranking_df['avg_watch_time'].apply(lambda x: f"{x:,.0f}")
+        ranking_df['avg_engagement_rate'] = ranking_df['avg_engagement_rate'].apply(lambda x: f"{x:.2f}%")
+        ranking_df['subscriber_count'] = ranking_df['subscriber_count'].apply(lambda x: f"{x:,.0f}")
+        ranking_df['saw_score'] = ranking_df['saw_score'].apply(lambda x: f"{x:.4f}")
         
         st.dataframe(ranking_df, use_container_width=True, hide_index=True)
     
@@ -328,23 +323,23 @@ def dashboard_page():
         # YouTuber selector for comparison
         selected_youtubers = st.multiselect(
             "Pilih YouTuber untuk dibandingkan (maksimal 5):",
-            options=df['Channel_Name'].tolist(),
-            default=df.nlargest(5, 'SAW_Score')['Channel_Name'].tolist()[:5],
+            options=df['channel_title'].tolist(),
+            default=df.nlargest(5, 'saw_score')['channel_title'].tolist()[:5],
             max_selections=5
         )
         
         if selected_youtubers:
-            comparison_df = df[df['Channel_Name'].isin(selected_youtubers)]
+            comparison_df = df[df['channel_title'].isin(selected_youtubers)]
             
             # Radar Chart
             fig_radar = go.Figure()
             
             # Normalize data for radar chart (0-1 scale)
-            metrics = ['Average_Views', 'Average_Likes', 'Average_Comments', 'Engagement_Rate', 'Subscriber_Count']
-            metric_labels = ['Avg Views', 'Avg Likes', 'Avg Comments', 'Engagement Rate', 'Subscribers']
+            metrics = ['avg_view_count', 'avg_like_count', 'avg_comment_count', 'avg_watch_time', 'avg_engagement_rate', 'subscriber_count']
+            metric_labels = ['Avg Views', 'Avg Likes', 'Avg Comments', 'Avg Watch Time', 'Engagement Rate', 'Subscribers']
             
             for idx, channel in enumerate(selected_youtubers):
-                channel_data = comparison_df[comparison_df['Channel_Name'] == channel].iloc[0]
+                channel_data = comparison_df[comparison_df['channel_title'] == channel].iloc[0]
                 
                 # Normalize each metric (min-max normalization)
                 normalized_values = []
@@ -380,10 +375,10 @@ def dashboard_page():
                 # Views comparison
                 fig_views = px.bar(
                     comparison_df,
-                    x='Channel_Name',
-                    y='Average_Views',
+                    x='channel_title',
+                    y='avg_view_count',
                     title="Perbandingan Average Views",
-                    color='Average_Views',
+                    color='avg_view_count',
                     color_continuous_scale='Blues'
                 )
                 fig_views.update_xaxis(tickangle=45)
@@ -393,10 +388,10 @@ def dashboard_page():
                 # Engagement rate comparison
                 fig_engagement = px.bar(
                     comparison_df,
-                    x='Channel_Name',
-                    y='Engagement_Rate',
+                    x='channel_title',
+                    y='avg_engagement_rate',
                     title="Perbandingan Engagement Rate",
-                    color='Engagement_Rate',
+                    color='avg_engagement_rate',
                     color_continuous_scale='Greens'
                 )
                 fig_engagement.update_xaxis(tickangle=45)
@@ -409,14 +404,14 @@ def dashboard_page():
         
         with col1:
             # Top channels by views
-            top_views = df.nlargest(10, 'Average_Views')
+            top_views = df.nlargest(10, 'avg_view_count')
             fig_top_views = px.bar(
                 top_views,
-                x='Average_Views',
-                y='Channel_Name',
+                x='avg_view_count',
+                y='channel_title',
                 orientation='h',
                 title="Top 10 - Highest Average Views",
-                color='Average_Views',
+                color='avg_view_count',
                 color_continuous_scale='Reds'
             )
             fig_top_views.update_layout(yaxis={'categoryorder': 'total ascending'})
@@ -424,14 +419,14 @@ def dashboard_page():
         
         with col2:
             # Top channels by subscribers
-            top_subs = df.nlargest(10, 'Subscriber_Count')
+            top_subs = df.nlargest(10, 'subscriber_count')
             fig_top_subs = px.bar(
                 top_subs,
-                x='Subscriber_Count',
-                y='Channel_Name',
+                x='subscriber_count',
+                y='channel_title',
                 orientation='h',
                 title="Top 10 - Highest Subscriber Count",
-                color='Subscriber_Count',
+                color='subscriber_count',
                 color_continuous_scale='Blues'
             )
             fig_top_subs.update_layout(yaxis={'categoryorder': 'total ascending'})
@@ -442,17 +437,17 @@ def dashboard_page():
         
         fig_scatter = px.scatter(
             df,
-            x='Average_Views',
-            y='Engagement_Rate',
-            size='Subscriber_Count',
-            color='SAW_Score',
-            hover_name='Channel_Name',
+            x='avg_view_count',
+            y='avg_engagement_rate',
+            size='subscriber_count',
+            color='saw_score',
+            hover_name='channel_title',
             title="Hubungan antara Views, Engagement Rate, dan Subscribers",
             labels={
-                'Average_Views': 'Average Views',
-                'Engagement_Rate': 'Engagement Rate (%)',
-                'Subscriber_Count': 'Subscribers',
-                'SAW_Score': 'SAW Score'
+                'avg_view_count': 'Average Views',
+                'avg_engagement_rate': 'Engagement Rate (%)',
+                'subscriber_count': 'Subscribers',
+                'saw_score': 'SAW Score'
             },
             color_continuous_scale='Viridis'
         )
@@ -478,13 +473,13 @@ def dashboard_page():
         filtered_df = df.copy()
         
         if search_term:
-            filtered_df = filtered_df[filtered_df['Channel_Name'].str.contains(search_term, case=False, na=False)]
+            filtered_df = filtered_df[filtered_df['channel_title'].str.contains(search_term, case=False, na=False)]
         
         if min_score > 0:
-            filtered_df = filtered_df[filtered_df['SAW_Score'] >= min_score]
+            filtered_df = filtered_df[filtered_df['saw_score'] >= min_score]
         
         if min_subs > 0:
-            filtered_df = filtered_df[filtered_df['Subscriber_Count'] >= min_subs]
+            filtered_df = filtered_df[filtered_df['subscriber_count'] >= min_subs]
         
         st.write(f"Menampilkan {len(filtered_df)} dari {len(df)} channels")
         
