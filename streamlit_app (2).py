@@ -6,7 +6,7 @@ from plotly.subplots import make_subplots
 import os
 import ast
 
-# Page configuration
+# Page config
 st.set_page_config(
     page_title="Sistem Rekomendasi Potensi Endorsement YouTuber",
     page_icon="🎯",
@@ -14,7 +14,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS for styling
+# CSS styling
 st.markdown("""
 <style>
     .main-header {
@@ -80,16 +80,16 @@ st.markdown("""
 
 @st.cache_data
 def load_data():
-    try:
-        if os.path.exists('saw_results.csv'):
+    if os.path.exists('saw_results.csv'):
+        try:
             df = pd.read_csv('saw_results.csv')
             return df
-        else:
-            st.error("❌ File 'saw_results.csv' tidak ditemukan!")
-            st.info("💡 Silakan jalankan Google Colab notebook terlebih dahulu untuk generate data.")
+        except Exception as e:
+            st.error(f"Error loading data: {e}")
             return None
-    except Exception as e:
-        st.error(f"❌ Error loading data: {str(e)}")
+    else:
+        st.error("❌ File 'saw_results.csv' tidak ditemukan!")
+        st.info("💡 Silakan jalankan Google Colab notebook terlebih dahulu untuk generate data.")
         return None
 
 def format_number(num):
@@ -430,4 +430,5 @@ def main():
     elif st.session_state.page == "dashboard":
         dashboard_page()
 
-if
+if __name__ == "__main__":
+    main()
