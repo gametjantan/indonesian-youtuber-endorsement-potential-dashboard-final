@@ -210,10 +210,10 @@ def create_criteria_radar_chart(df, channel_title):
 def landing_page():
     st.markdown("""
     <div class="landing-container">
-        <h1 class="landing-title">🎯 YouTube Endorsement Analyzer</h1>
-        <p class="landing-subtitle">Sistem Rekomendasi Potensi Endorsement YouTuber</p>
+        <h1 class="landing-title">🎯 Indonesian YouTuber Endorsement Analyzer</h1>
+        <p class="landing-subtitle">Dashboard Rekomendasi Potensi Endorsement YouTuber</p>
         <p class="landing-description">
-            Platform analisis canggih yang menggunakan metode SAW (Simple Additive Weighting) 
+            Platform analisis yang menggunakan metode SAW (Simple Additive Weighting) 
             untuk mengevaluasi potensi endorsement channel YouTube berdasarkan multiple kriteria 
             seperti engagement rate, view count, subscriber count, dan metrik lainnya.
         </p>
@@ -280,9 +280,9 @@ def landing_page():
     """, unsafe_allow_html=True)
 
 def dashboard_page():
-    if st.button("← Kembali ke Landing Page", key="back_button"):
+    if st.button("← Kembali ke Halaman Utama", key="back_button"):
         st.session_state.page = "landing"
-    st.markdown('<h1 class="main-header">Sistem Rekomendasi Potensi Endorsement YouTuber</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 class="main-header">Dashboard Rekomendasi Potensi Endorsement YouTuber</h1>', unsafe_allow_html=True)
     st.markdown('<p class="sub-header">Analisis Metrik dan Engagement Menggunakan Metode SAW (Simple Additive Weighting)</p>', unsafe_allow_html=True)
     df = load_data()
     if df is None:
