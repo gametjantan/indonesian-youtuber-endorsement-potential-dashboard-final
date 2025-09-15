@@ -5,7 +5,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import os
-import ast # Import the ast module
+import ast
 
 # Page configuration
 st.set_page_config(
@@ -129,7 +129,6 @@ st.markdown("""
 
 @st.cache_data
 def load_data():
-    """Load SAW results data with error handling"""
     try:
         if os.path.exists('saw_results.csv'):
             df = pd.read_csv('saw_results.csv')
@@ -143,7 +142,6 @@ def load_data():
         return None
 
 def format_number(num):
-    """Format large numbers for better readability"""
     if num >= 1_000_000:
         return f"{num/1_000_000:.1f}M"
     elif num >= 1_000:
@@ -152,9 +150,7 @@ def format_number(num):
         return f"{num:,.0f}"
 
 def create_ranking_chart(df_filtered, top_n=15):
-    """Create interactive ranking bar chart"""
     top_channels = df_filtered.head(top_n)
-    
     fig = px.bar(
         top_channels,
         x='rank',
@@ -164,7 +160,6 @@ def create_ranking_chart(df_filtered, top_n=15):
         title=f"Top {top_n} Channel - Ranking Potensi Endorsement",
         labels={'saw_score': 'SAW Score', 'rank': 'Ranking'}
     )
-
     fig.update_layout(
         height=500,
         showlegend=True,
@@ -173,28 +168,22 @@ def create_ranking_chart(df_filtered, top_n=15):
         xaxis_title="Ranking",
         yaxis_title="SAW Score"
     )
-    
     return fig
 
 def create_genre_analysis_chart(df):
-    """Create genre analysis charts"""
     genre_stats = df.groupby('genre').agg({
         'saw_score': ['mean', 'count', 'std'],
         'avg_view_count': 'mean',
         'subscriber_count': 'mean'
     }).round(4)
-    
     genre_stats.columns = ['avg_score', 'count', 'std_score', 'avg_views', 'avg_subscribers']
     genre_stats = genre_stats.reset_index().sort_values('avg_score', ascending=False)
 
-    # Create subplot
     fig = make_subplots(
         rows=1, cols=2,
         subplot_titles=('Rata-rata Skor SAW per Genre', 'Jumlah Channel per Genre'),
         specs=[[{"secondary_y": False}, {"secondary_y": False}]]
     )
-
-    # Average score bar chart
     fig.add_trace(
         go.Bar(
             x=genre_stats['genre'],
@@ -206,8 +195,6 @@ def create_genre_analysis_chart(df):
         ),
         row=1, col=1
     )
-
-    # Channel count bar chart
     fig.add_trace(
         go.Bar(
             x=genre_stats['genre'],
@@ -219,30 +206,23 @@ def create_genre_analysis_chart(df):
         ),
         row=1, col=2
     )
-
     fig.update_layout(
         height=400,
         showlegend=False,
         title_text="Analisis per Genre",
         title_x=0.5
     )
-    
     return fig, genre_stats
 
 def create_criteria_radar_chart(df, channel_title):
-    """Create radar chart for specific channel criteria"""
     channel_data = df[df['channel_title'] == channel_title].iloc[0]
-    
-    # Normalize criteria values (0-1 scale)
     criteria = ['avg_view_count', 'avg_like_count', 'avg_comment_count', 
                 'avg_watch_time','avg_engagement_rate', 'subscriber_count']
-
     normalized_values = []
     for criterion in criteria:
         max_val = df[criterion].max()
         normalized_val = channel_data[criterion] / max_val if max_val > 0 else 0
         normalized_values.append(normalized_val)
-    
     criteria_labels = [
         'Avg Views',
         'Avg Likes', 
@@ -251,9 +231,7 @@ def create_criteria_radar_chart(df, channel_title):
         'Engagement Rate',
         'Subscribers'
     ]
-
     fig = go.Figure()
-    
     fig.add_trace(go.Scatterpolar(
         r=normalized_values,
         theta=criteria_labels,
@@ -261,7 +239,6 @@ def create_criteria_radar_chart(df, channel_title):
         name=channel_title,
         line_color='rgb(102, 126, 234)'
     ))
-
     fig.update_layout(
         polar=dict(
             radialaxis=dict(
@@ -273,12 +250,9 @@ def create_criteria_radar_chart(df, channel_title):
         title_x=0.5,
         height=400
     )
-    
     return fig
 
 def landing_page():
-    """Landing page with welcome message and features"""
-    
     st.markdown("""
     <div class="landing-container">
         <h1 class="landing-title">🎯 YouTube Endorsement Analyzer</h1>
@@ -290,12 +264,8 @@ def landing_page():
         </p>
     </div>
     """, unsafe_allow_html=True)
-    
-    # Features section
     st.markdown("### ✨ Fitur Utama")
-    
     col1, col2, col3 = st.columns(3)
-    
     with col1:
         st.markdown("""
         <div class="feature-card">
@@ -304,7 +274,6 @@ def landing_page():
             <p>Evaluasi comprehensive menggunakan 6 kriteria utama dengan bobot yang telah dioptimalkan menggunakan metode ROC.</p>
         </div>
         """, unsafe_allow_html=True)
-    
     with col2:
         st.markdown("""
         <div class="feature-card">
@@ -313,7 +282,6 @@ def landing_page():
             <p>Sistem ranking otomatis berdasarkan SAW score untuk mengidentifikasi channel dengan potensi endorsement tertinggi.</p>
         </div>
         """, unsafe_allow_html=True)
-    
     with col3:
         st.markdown("""
         <div class="feature-card">
@@ -322,12 +290,8 @@ def landing_page():
             <p>Dashboard interaktif dengan berbagai chart dan grafik untuk analisis yang lebih mendalam dan insight yang actionable.</p>
         </div>
         """, unsafe_allow_html=True)
-    
     st.markdown("---")
-    
-    # Additional info
     col1, col2 = st.columns(2)
-    
     with col1:
         st.markdown("### 🎯 Kriteria Analisis")
         st.markdown("""
@@ -338,7 +302,6 @@ def landing_page():
         - **Average Likes (6.11%)** - Rata-rata likes per video
         - **Average Comments (2.78%)** - Rata-rata komentar per video
         """)
-    
     with col2:
         st.markdown("### 📋 Yang Bisa Anda Lakukan")
         st.markdown("""
@@ -349,16 +312,11 @@ def landing_page():
         - 📥 **Download hasil analisis** dalam format CSV
         - 🕸️ **Analisis radar chart** untuk profil channel detail
         """)
-    
     st.markdown("---")
-    
-    # Start button
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        if st.button("🚀 Mulai Analisis Sekarang", use_container_width=True, type="primary"):
+        if st.button("🚀 Mulai Analisis Sekarang", use_container_width=True):
             st.session_state.page = "dashboard"
-            st.rerun()
-    
     st.markdown("---")
     st.markdown("""
     <div style='text-align: center; color: #666; padding: 1rem;'>
@@ -367,36 +325,20 @@ def landing_page():
     """, unsafe_allow_html=True)
 
 def dashboard_page():
-    """Main dashboard page"""
-    
-    # Back to landing button
     if st.button("← Kembali ke Landing Page", key="back_button"):
         st.session_state.page = "landing"
-        st.rerun()
-    
-    # Header
     st.markdown('<h1 class="main-header">Sistem Rekomendasi Potensi Endorsement YouTuber</h1>', unsafe_allow_html=True)
     st.markdown('<p class="sub-header">Analisis Metrik dan Engagement Menggunakan Metode SAW (Simple Additive Weighting)</p>', unsafe_allow_html=True)
-    
-    # Load data
     df = load_data()
-    
     if df is None:
         st.stop()
-    
-    # Sidebar
     st.sidebar.header("🔧 Filter & Pengaturan")
-    
-    # Genre filter
-    available_genres = ['Semua Genre'] + sorted(df['genre'].unique().tolist())
     selected_genres = st.sidebar.multiselect(
         "Pilih Genre:",
         options=df['genre'].unique(),
         default=df['genre'].unique(),
         help="Pilih satu atau lebih genre untuk dianalisis"
     )
-
-    # Top N filter
     top_n = st.sidebar.slider(
         "Jumlah Top Channel:",
         min_value=5,
@@ -405,8 +347,6 @@ def dashboard_page():
         step=5,
         help="Pilih jumlah channel teratas yang ingin ditampilkan"
     )
-
-    # SAW Criteria Information
     st.sidebar.markdown("### 📊 Kriteria SAW")
     st.sidebar.markdown("""
     **Bobot ROC Prioritas Kriteria:**
@@ -417,28 +357,20 @@ def dashboard_page():
     - ❤️ Avg Likes: 6,11%
     - 💬 Avg Comments: 2,78%
     """)
-
-    # Filter data
     if selected_genres:
         df_filtered = df[df['genre'].isin(selected_genres)].copy()
     else:
         df_filtered = df.copy()
-    
-    # Main content
     if len(df_filtered) == 0:
         st.warning("⚠️ Tidak ada data yang sesuai dengan filter yang dipilih.")
         return
-    
-    # Key metrics
     col1, col2, col3, col4 = st.columns(4)
-
     with col1:
         st.metric(
             label="📊 Total Channel",
             value=len(df_filtered),
             delta=f"{len(selected_genres)} genre"
         )
-    
     with col2:
         best_channel = df_filtered.iloc[0]
         st.metric(
@@ -446,7 +378,6 @@ def dashboard_page():
             value=best_channel['channel_title'],
             delta=f"Score: {best_channel['saw_score']:.4f}"
         )
-    
     with col3:
         avg_score = df_filtered['saw_score'].mean()
         st.metric(
@@ -454,7 +385,6 @@ def dashboard_page():
             value=f"{avg_score:.4f}",
             delta=f"Range: {df_filtered['saw_score'].min():.3f}-{df_filtered['saw_score'].max():.3f}"
         )
-
     with col4:
         total_avg_views = df_filtered['avg_view_count'].sum()
         st.metric(
@@ -462,50 +392,25 @@ def dashboard_page():
             value=format_number(total_avg_views),
             delta=f"Avg: {format_number(df_filtered['avg_view_count'].mean())}"
         )
-
     st.markdown("---")
-    
-    # Main charts
     col1, col2 = st.columns([2, 1])
-    
     with col1:
-        # Ranking chart
         ranking_fig = create_ranking_chart(df_filtered, top_n)
         st.plotly_chart(ranking_fig, use_container_width=True)
-
     with col2:
-        # Top channels table
         st.subheader(f"🏆 Top {min(10, len(df_filtered))} Channel")
         top_channels = df_filtered.head(10)[['rank', 'channel_title', 'genre', 'saw_score']]
-        
-        # Format the dataframe for display
         display_df = top_channels.copy()
         display_df['saw_score'] = display_df['saw_score'].round(4)
         display_df.columns = ['Rank', 'Channel', 'Genre', 'Score']
-    
-        st.dataframe(
-            display_df,
-            use_container_width=True,
-            hide_index=True,
-            height=350
-        )
-    
-    # Genre analysis
+        st.dataframe(display_df, use_container_width=True, hide_index=True, height=350)
     st.subheader("📊 Analisis per Genre")
     genre_fig, genre_stats = create_genre_analysis_chart(df_filtered)
     st.plotly_chart(genre_fig, use_container_width=True)
-    
-    # Detailed analysis
     col1, col2 = st.columns(2)
-
     with col1:
         st.subheader("📈 Statistik Genre")
-        st.dataframe(
-            genre_stats[['genre', 'avg_score', 'count', 'std_score']].round(4),
-            use_container_width=True,
-            hide_index=True
-        )
-    
+        st.dataframe(genre_stats[['genre', 'avg_score', 'count', 'std_score']].round(4), use_container_width=True, hide_index=True)
     with col2:
         st.subheader("🔍 Channel Detail Analysis")
         selected_channel = st.selectbox(
@@ -513,20 +418,15 @@ def dashboard_page():
             options=df_filtered['channel_title'].tolist(),
             help="Pilih channel untuk melihat profil kriteria detail"
         )
-
         if selected_channel:
             radar_fig = create_criteria_radar_chart(df_filtered, selected_channel)
             st.plotly_chart(radar_fig, use_container_width=True)
-
-            # Display Top Videos
             st.markdown("#### 🎬 Top Videos")
             channel_data = df_filtered[df_filtered['channel_title'] == selected_channel].iloc[0]
-            
             try:
                 top_video_titles = ast.literal_eval(channel_data['top_video_titles'])
                 top_video_views = ast.literal_eval(channel_data['top_video_views'])
                 top_video_links = ast.literal_eval(channel_data['top_video_links'])
-
                 for i in range(len(top_video_titles)):
                     st.markdown(f"""
                     - **{top_video_titles[i]}**
@@ -536,71 +436,18 @@ def dashboard_page():
             except (ValueError, SyntaxError) as e:
                 st.warning(f"Could not parse top video data for {selected_channel}: {e}")
                 st.info("Ensure 'top_video_titles', 'top_video_views', and 'top_video_links' columns are correctly formatted as string representations of lists.")
-
-    # Detailed data table
     st.subheader("📋 Data Lengkap")
-    
-    # Column selection for display
     display_columns = st.multiselect(
         "Pilih kolom yang ingin ditampilkan:",
         options=['rank', 'channel_title', 'genre', 'saw_score', 'avg_view_count', 
                 'avg_like_count', 'avg_comment_count', 'avg_watch_time', 'avg_engagement_rate', 'subscriber_count',
-                'top_video_titles', 'top_video_views', 'top_video_links'], # Added new columns
+                'top_video_titles', 'top_video_views', 'top_video_links'],
         default=['rank', 'channel_title', 'genre', 'saw_score', 'avg_view_count', 'subscriber_count']
     )
-
     if display_columns:
-        # Format numbers for better display
         display_data = df_filtered[display_columns].copy()
-
-        # Format numeric columns
         numeric_columns = ['saw_score', 'avg_view_count', 'avg_like_count', 
-                          'avg_comment_count', 'avg_watch_time', 'avg_engagement_rate', 'subscriber_count', 'top_video_views'] # Added top_video_views
-        
+                          'avg_comment_count', 'avg_watch_time', 'avg_engagement_rate', 'subscriber_count', 'top_video_views']
         for col in numeric_columns:
             if col in display_data.columns:
-                if col == 'saw_score' or col == 'avg_engagement_rate':
-                    display_data[col] = display_data[col].round(4)
-                elif col == 'top_video_views': # Special handling for top_video_views which is a list
-                    display_data[col] = display_data[col].apply(lambda x: [f"{v:,.0f}" for v in ast.literal_eval(x)] if isinstance(x, str) else x)
-                else:
-                    display_data[col] = display_data[col].apply(lambda x: f"{x:,.0f}")
-        
-        st.dataframe(
-            display_data,
-            use_container_width=True,
-            hide_index=True,
-            height=400
-        )
-        
-        # Download button
-        csv = df_filtered.to_csv(index=False)
-        st.download_button(
-            label="📥 Download Data (CSV)",
-            data=csv,
-            file_name=f"youtube_endorsement_analysis_{len(selected_genres)}_genres.csv",
-            mime="text/csv"
-        )
-
-    # Footer
-    st.markdown("---")
-    st.markdown("""
-    <div style='text-align: center; color: #666; padding: 1rem;'>
-        <p><strong>Sistem Rekomendasi Potensi Endorsement YouTuber</strong></p>
-        <p>Menggunakan Metode SAW (Simple Additive Weighting) untuk analisis multi-kriteria</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-def main():
-    # Initialize session state for page navigation
-    if 'page' not in st.session_state:
-        st.session_state.page = "landing"
-    
-    # Page routing
-    if st.session_state.page == "landing":
-        landing_page()
-    elif st.session_state.page == "dashboard":
-        dashboard_page()
-
-if __name__ == "__main__":
-    main()
+                if col == 'saw_score'
