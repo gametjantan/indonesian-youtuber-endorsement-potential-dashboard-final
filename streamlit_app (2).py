@@ -210,7 +210,7 @@ def create_criteria_radar_chart(df, channel_title):
 def landing_page():
     st.markdown("""
     <div class="landing-container">
-        <h1 class="landing-title">🎯 Indonesian YouTuber Endorsement Analyzer</h1>
+        <h1 class="landing-title">🎯 Indonesian YouTuber Endorsement Potential Analyzer</h1>
         <p class="landing-subtitle">Dashboard Rekomendasi Potensi Endorsement YouTuber</p>
         <p class="landing-description">
             Platform analisis yang menggunakan metode SAW (Simple Additive Weighting) 
