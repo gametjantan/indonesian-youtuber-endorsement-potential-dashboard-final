@@ -8,7 +8,7 @@ import ast
 
 # Page config
 st.set_page_config(
-    page_title="Sistem Rekomendasi Potensi Endorsement YouTuber",
+    page_title="Rekomendasi Potensi Endorsement YouTuber",
     page_icon="🎯",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -58,8 +58,6 @@ st.markdown("""
         font-size: 1.1rem;
         margin-bottom: 3rem;
         max-width: 800px;
-        margin-left: auto;
-        margin-right: auto;
         line-height: 1.6;
     }
     .feature-card {
